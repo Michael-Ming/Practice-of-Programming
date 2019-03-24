@@ -1,7 +1,5 @@
 #include <iostream> 
 #include <string> 
-#include <cstdlib> 
-#include <cstdio> 
 #include <iomanip>
 #include <vector> 
 #include <list>
@@ -37,7 +35,6 @@ class CEvent{
 		int getnCityNo(){return nCityNo;}
 		int getnColor(){return nColor;}
 		int getnWarrior(){return nWarrior;}
-		string getsDescribe(){return sDescribe;}
 		void output(){
 			cout << sDescribe << endl;
 			}
@@ -72,7 +69,7 @@ protected:
 	CWarrior * master;
 	int idWeapon;
 	int num;
-	string name;//耐久,sword恒为1，bomb为1,0，弓箭为2,1,0
+	string name;
 public:
 	CWeapon(){num=0;};
 	~CWeapon(){};
@@ -216,7 +213,6 @@ class CLion:public CWarrior{
 		virtual int Lion_getnLoyalty(){return nLoyalty;}
 };
 class CWolf:public CWarrior{
-	//string name;
 	public:
 		CWolf(CHead* head, int life, int power, int n):CWarrior(head, life, power, n){name="wolf";}
 		virtual string getname(){return name;};
@@ -230,15 +226,14 @@ class CHead{
 	CWow * pWow;
 	CHead * pEnemyhead;
 	string Color;
-	
-	int M;//生命
-	int N;//city num
+	int M;
+	int N;
 	int K;
-	int nHead;//总部所位于的城市No.
-	int nColor;//颜色编号: red-0,blue-1;
-	int wTypeNum;//战士种类
-	int nWarrior;//当前制造战士数目
-	int nWarriorType;//当前制造的战士类型
+	int nHead;
+	int nColor;
+	int nwType;
+	int nWarrior;
+	int nWarriorType;
 	int lstOrder[5];
 	int lstLife[5];
 	int lstPower[5];
@@ -246,7 +241,6 @@ class CHead{
 		CHead(){
 		}
 		~CHead(){};
-		//生产怪物
 		int Ini(int m, int n, int k, int nhead, int ncolor, const string color, CWow* wow, int * order, int* life, int * power){
 			M=m;
 			N=n;
@@ -255,10 +249,10 @@ class CHead{
 			nColor=ncolor;
 			Color=color;
 			pWow=wow;
-			wTypeNum=5;
+			nwType=5;
 			nWarrior=0;
 			nWarriorType=0;
-			for (int i = 0; i < wTypeNum; ++i)
+			for (int i = 0; i < nwType; ++i)
 			{
 				lstOrder[i]=order[i];
 				lstLife[i]=life[i];
@@ -320,12 +314,11 @@ class CWow{
 		}
 		int Battles(int t);
 		int Battle(int idCity);
-		int battleEnd(CWarrior* ourWarrior,CWarrior* enemyWarrior,int ourLastLifeValue,int enemyLastLifeValue,int nour,int nourlast,int nenemy,int nenemylast,int weaponNumChange);
 };
 
 int CHead::WarriorBorn(int t){
 	int n=lstOrder[nWarriorType];
-	for(int i=0; i<wTypeNum;++i){
+	for(int i=0; i<nwType;++i){
 		if(canborn(n)){
 			CWarrior * pWarrior;
 			ostringstream sout_2;
@@ -365,10 +358,10 @@ int CHead::WarriorBorn(int t){
 			CEvent event(1,t,nHead,nColor,nWarrior,sout.str());
 			pWow->addEvent(event);
 			M-=lstLife[n];
-			nWarriorType=(nWarriorType+1)%wTypeNum;
+			nWarriorType=(nWarriorType+1)%nwType;
 			break;
 		}
-		else{nWarriorType=(nWarriorType+1)%wTypeNum;}
+		else{nWarriorType=(nWarriorType+1)%nwType;}
 	}
 };
 
@@ -406,15 +399,15 @@ int CHead::WarriorsMarch(int t,int dirCity){
 			pWarrior->Iceman_lossLife();
 		}
 		pWarrior->pCity->outCity(pWarrior,nColor);
-		pWarrior->pCity=&pWarrior->pHead->pWow->pCitys[tempnCity];//*(&(pWarrior->pCity)+dirCity*sizeof(CCity));//完成行军
-		pWarrior->pCity->inCity(pWarrior,nColor);//进入与出去City
-		if(tempnCity>0 && tempnCity <= pWow->N_MAX){//注意nHead是自己的nHead，不是最大的emmm	
+		pWarrior->pCity=&pWarrior->pHead->pWow->pCitys[tempnCity];
+		pWarrior->pCity->inCity(pWarrior,nColor);
+		if(tempnCity>0 && tempnCity <= pWow->N_MAX){
 			ostringstream sout;
 			sout<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" "<<Color<<" "<<pWarrior->name<<" "<<pWarrior->idWarrior <<" marched to city "<<tempnCity<<" with "<<pWarrior->m_nLifeValue<<" elements and force "<<pWarrior->m_nPower;
 			CEvent event(3,t,tempnCity,nColor,nWarrior,sout.str());
 			pWow->addEvent(event);
 		}
-		if(tempnCity==0){//胜利就在前方！！！
+		if(tempnCity==0){
 				ostringstream sout;
 				sout<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" "<<Color<<" "<<pWarrior->name<<" "<<pWarrior->idWarrior <<" reached red headquarter with "<<pWarrior->m_nLifeValue<<" elements and force "<<pWarrior->m_nPower;
 				CEvent event(7,t,tempnCity,nColor,nWarrior,sout.str());
@@ -435,7 +428,6 @@ int CHead::WarriorsMarch(int t,int dirCity){
 				sout_3<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" blue headquarter was taken";
 				CEvent event3(8,t,tempnCity,nColor,nWarrior,sout_3.str());
 				pWow->addEvent(event3);
-				//cout<<tempnCity<<"hhh"<<endl;
 				Victory=1;
 			}
 			
@@ -467,7 +459,6 @@ int CHead::WolfsRob(int t){
 void CWolf::Wolf_rob(int*pnum, int*pid){
 	CWarrior* pEnemy=pCity->getEnemyInCity(pHead->getnColor());
 	if(pEnemy){
-		//抢东西
 		if(pEnemy->getname()!="wolf"){
 			int num=0;
 			num=SortWeapons();
@@ -495,13 +486,11 @@ int CSword::wpAttack(CWarrior * warrior, CWarrior* enemy){
 }
 int CBomb::wpAttack(CWarrior * warrior, CWarrior* enemy){
 	int nhurt=warrior->getPower()*4/10;
-	//cout<<warrior->getname()<<enemy->getname()<<" with "<<warrior->getLifeValue()<<" "<<enemy->getLifeValue()<<";  ";
 	enemy->Hurted(nhurt);
 	if(warrior->getname()!="ninja")warrior->Hurted(nhurt/2);
 	num=0;
 	if(nhurt<1) return -1;
 	else return 0;
-	//cout<<"bomb!"<<nhurt<<warrior->getname()<<enemy->getname()<<" with "<<warrior->getLifeValue()<<" "<<enemy->getLifeValue()<<endl;
 }
 int CArrow::wpAttack(CWarrior * warrior, CWarrior* enemy){
 	int nhurt=warrior->getPower()*3/10;
@@ -510,55 +499,37 @@ int CArrow::wpAttack(CWarrior * warrior, CWarrior* enemy){
 	if(nhurt<1) return -1;
 	else return 0;
 }
-
-int CWarrior::SortWeapons(){//返回武器个数
+int CWarrior::SortWeapons(){
 	sort(weapons,weapons+WPS_MAX,CompareWeapon);
 	int i = 0;
 	for (; i < WPS_MAX; ++i) if (weapons[i]==NULL || weapons[i]->getNum()==0) break;
 	return i;
 }
-
 bool CWarrior::CompareWeapon(CWeapon* a,CWeapon* b){
-	if(b==NULL){
-		return true;
-	}
-	if(a==NULL){
-		return false;
-	}
-	if(b->getNum()==0){
-		return true;
-	}
-	else if((a->getNum()>0 && b->getNum()>0)&&(a->getId()<b->getId())){
-		return true;
-	}
-	else if((a->getNum()>0 && b->getNum()>0)&&(a->getId()==b->getId())&&(a->getNum()>=b->getNum())) {
-		return true;
-	}
-	else{
-		 return false;
-	}
+	if(b==NULL)return true;
+	if(a==NULL)return false;
+	if(b->getNum()==0)return true;
+	else if((a->getNum()>0 && b->getNum()>0)&&(a->getId()<b->getId()))return true;
+	else if((a->getNum()>0 && b->getNum()>0)&&(a->getId()==b->getId())&&(a->getNum()>=b->getNum()))return true;
+	else return false;
 }
-
-
 int CWow::Battles(int t){
 	int idCity=1;
 	for(; idCity<=N_MAX;++idCity){
-		Battle(idCity);//通过City找怪物的，所以不用担心怪兽是否存在
+		Battle(idCity);
 		CWarrior* redWarrior=pCitys[idCity].getWarriorInCity(Red.nColor);
 		CWarrior* blueWarrior=pCitys[idCity].getWarriorInCity(Blue.nColor);
 		if (redWarrior && blueWarrior){
 		int redWeaponsNum=redWarrior->SortWeapons();
 		int blueWeaponsNum=blueWarrior->SortWeapons();
 		ostringstream sout;	
-		//输出结果
 		if(redWarrior->m_nLifeValue<=0){
 			redWarrior->pCity->outCity(redWarrior,0);
 			redWarrior->exist=0;
-			if(blueWarrior->m_nLifeValue<=0){//都死了
+			if(blueWarrior->m_nLifeValue<=0){
 				blueWarrior->pCity->outCity(blueWarrior,1);
 				blueWarrior->exist=0;
 				sout<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" both red "<<redWarrior->name<<" "<<redWarrior->idWarrior <<" and blue "<<blueWarrior->name<<" "<<blueWarrior->idWarrior <<" died in city "<<idCity;
-				
 			}
 			else
 			{
@@ -577,9 +548,8 @@ int CWow::Battles(int t){
 				redWarrior->weapons[redWeaponsNum+i]=blueWarrior->weapons[i];
 			}
 			sout<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" red "<<redWarrior->name<<" "<<redWarrior->idWarrior <<" killed blue "<<blueWarrior->name<<" "<<blueWarrior->idWarrior <<" in city "<<idCity<<" remaining "<<redWarrior->m_nLifeValue<<" elements";
-			
 		}
-		else{//都活着
+		else{
 			sout<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" both red "<<redWarrior->name<<" "<<redWarrior->idWarrior <<" and blue "<<blueWarrior->name<<" "<<blueWarrior->idWarrior <<" were alive in city "<<idCity;
 			
 		}
@@ -596,17 +566,17 @@ int CWow::Battles(int t){
 				sout_2<<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" blue "<<blueWarrior->name<<" "<<blueWarrior->idWarrior <<" yelled in city "<<idCity;
 				CEvent event_2(6,t,idCity,1,blueWarrior->idWarrior,sout_2.str());
 				addEvent(event_2);
-		}
-		
+			}
 		}
 	}	
 };
-
-int CWow::Battle(int idCity){//这个battle是否真的做好了呢？存疑
+int CWow::Battle(int idCity){
 	CWarrior* redWarrior=pCitys[idCity].getWarriorInCity(Red.nColor);
 	CWarrior* blueWarrior=pCitys[idCity].getWarriorInCity(Blue.nColor);
 	int weaponNumPeace=0;
 	int& peace=weaponNumPeace;
+	int weaponNumPeace_2=0;
+	int& peace_2=weaponNumPeace_2;
 	CWarrior* ourWarrior;
 	CWarrior* enemyWarrior;
 	if (redWarrior && blueWarrior){
@@ -615,72 +585,40 @@ int CWow::Battle(int idCity){//这个battle是否真的做好了呢？存疑
 		if(idCity%2==1){ourWarrior=redWarrior;enemyWarrior=blueWarrior;}
 		else{ourWarrior=blueWarrior;enemyWarrior=redWarrior;}
 		int nour=0,nenemy=0;
-		int nourlast=0,nenemylast=0;
-		int redLastLifeValue=0,enemyLastLifeValue=0;
-		int ourLastLifeValue=0;
 		while(1){
 			if(nour!=-1){
-				ourLastLifeValue=ourWarrior->m_nLifeValue;
-				enemyLastLifeValue=enemyWarrior->m_nLifeValue;
-				nourlast=nour;
-				nenemylast=nenemy;
 				nour=ourWarrior->Attack(enemyWarrior,peace,nour);}
 			else{peace++;}
-			if (ourWarrior->m_nLifeValue<=0 || enemyWarrior->m_nLifeValue<=0) return 1;//有胜负好办，平局呢？如何检测平局？一种是一直循环，还有一种是一直在打但是没有伤害，所以看伤害吧，累计10次没有伤害的话就结束战斗；
-			//if (battleEnd(ourWarrior,enemyWarrior,ourLastLifeValue,enemyLastLifeValue,nour,nourlast,nenemy,nenemylast,weaponNumChange))
-			//	break;
-			if(nenemy!=-1){
-				ourLastLifeValue=ourWarrior->m_nLifeValue;
-				enemyLastLifeValue=enemyWarrior->m_nLifeValue;
-				nourlast=nour;
-				nenemylast=nenemy;
-				nenemy=enemyWarrior->Attack(ourWarrior,peace,nenemy);}
-			else{peace++;}
 			if (ourWarrior->m_nLifeValue<=0 || enemyWarrior->m_nLifeValue<=0) return 1;
-			//if (battleEnd(ourWarrior,enemyWarrior,ourLastLifeValue,enemyLastLifeValue,nour,nourlast,nenemy,nenemylast,weaponNumChange))
-			//	break;
-			if(peace>=2*WPS_MAX) { return 0;};//cout<<ourWarrior->getname()<<" vs "<<enemyWarrior->getname()<<endl;
+
+			if(nenemy!=-1){
+				nenemy=enemyWarrior->Attack(ourWarrior,peace_2,nenemy);}
+			else{peace_2++;}
+			if (ourWarrior->m_nLifeValue<=0 || enemyWarrior->m_nLifeValue<=0) return 1;
+			if(peace>=2*WPS_MAX && peace_2>=2*WPS_MAX) return 0;
 		}
 	}
 };
-
-int CWarrior::Attack( CWarrior * pWarrior, int& peaceBatttle, int nWeapon){//返回下一件武器（可能耐久为0什么的）//没有造成伤害就返回-1
-	//if(nWeapon==-1) return -1;<<
-	//cout<<endl<<"attack"<<pWarrior->pHead->nColor<<pWarrior->getname()<<pWarrior->idWarrior<<endl;
+int CWarrior::Attack( CWarrior * pWarrior, int& peaceBatttle, int nWeapon){
 	for (int i = 0; i < WPS_MAX; ++i)
-	{	//cout<<" <"<<nWeapon<<"> ";
-		//weapons[0];
-		//nWeapon=nWeapon%10;
-		if(weapons[nWeapon]==NULL) {//武器是空的，换下一个
-			nWeapon=(nWeapon+1)%WPS_MAX;
-			continue;
-		}
-		if(weapons[nWeapon]->getNum()){//武器不空而且有耐久
-			int tag;
-			tag=weapons[nWeapon]->wpAttack(this,pWarrior);
-			if(tag==-1) peaceBatttle+=1;
-			//if(weapons[nWeapon]->getId()==1 || weapons[nWeapon]->getId()==2) weaponNumChange=1;
-			//else weaponNumChange=0;
-			nWeapon=(nWeapon+1)%WPS_MAX;
-			return nWeapon;
-		}
+	{if(weapons[nWeapon]==NULL) {
+		nWeapon=(nWeapon+1)%WPS_MAX;
+		continue;
+	}
+	if(weapons[nWeapon]->getNum()){
+		int tag;
+		tag=weapons[nWeapon]->wpAttack(this,pWarrior);
+		if(tag==-1) peaceBatttle+=1;
+		nWeapon=(nWeapon+1)%WPS_MAX;
+		return nWeapon;
+	}
 		else{
 			nWeapon=(nWeapon+1)%WPS_MAX;
 			continue;
 		}
 	}
-	return -1;//没有武器了事实上，而且回到了原来的值，尽管和只有一个武器是一样的
+	return -1;
 };
-int CWow::battleEnd(CWarrior* ourWarrior,CWarrior* enemyWarrior,int ourLastLifeValue,int enemyLastLifeValue,int nour,int nourlast,int nenemy,int nenemylast,int weaponNumChange){
-	if (ourWarrior->m_nLifeValue<=0 || enemyWarrior->m_nLifeValue<=0) return 1;//有一方没血了自然是要结束的
-	else if (ourWarrior->m_nLifeValue==ourLastLifeValue && enemyWarrior->m_nLifeValue==enemyLastLifeValue){//这里有问题。。吗？
-		if(nour==nourlast && nenemy==nenemylast) return 1;//没有造成伤害啊小傻子，你想一下，平局的时候多循环几次对于结果是不会有什么影响的，反正消耗品是必须要消耗完的，剩下的也不会有消耗，所以多几轮这样子可能会比较好，比如说10轮之类的
-		if(!weaponNumChange) return 1;
-		else return 0;
-	}
-	else return 0;
-
-}
 int CHead::PrintMoney(int t){
 	ostringstream sout;
 	sout <<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" "<<M<<" elements in "<<Color<<" headquarter";
@@ -695,16 +633,8 @@ int CHead::WarriorsReport(int t){
 			ostringstream sout;
 			pWarrior->SortWeapons();
 			int numlist[3]={0,0,0};
-			for (int i = 0; i < WPS_MAX; ++i)
-			{
-				if (pWarrior->weapons[i])
-				{
-					if (pWarrior->weapons[i]->getNum()>0)
-					{
-						numlist[pWarrior->weapons[i]->getId()]++;
-					}
-				}
-			}
+			for (int i = 0; i < WPS_MAX; ++i){
+				if (pWarrior->weapons[i]&& pWarrior->weapons[i]->getNum()>0) numlist[pWarrior->weapons[i]->getId()]++;}
 			sout <<setw(3)<<setfill('0')<<t/60 <<":"<<setw(2)<<setfill('0')<<t%60<<" "<<Color<<" "<<pWarrior->getname()<<" "<<pWarrior->idWarrior<<" has "<<numlist[0]<<" sword "<<numlist[1]<<" bomb "<<numlist[2]<<" arrow and "<<pWarrior->getLifeValue()<<" elements";
 			CEvent event(2,t,pWarrior->pCity->getnCityNo(),nColor,nWarrior,sout.str());
 			pWow->addEvent(event);
@@ -726,7 +656,7 @@ bool CWow::ComparevEvent(CEvent a,CEvent b){
 	return false;
 }
 
-int CWow::SortResult(){//返回武器个数
+int CWow::SortResult(){
 	sort(&vEvent.front(),&vEvent.back()+1,ComparevEvent);
 }
 
@@ -735,44 +665,35 @@ int CWow::Run(int EndTime){
 	int victory=0;
 	for (int t = 0; t<= EndTime; )
 	{
-		//0//生产怪物
 		if (t>EndTime) return 0;
 		Red.WarriorBorn(t);
 		Blue.WarriorBorn(t);
-		
-		t+=5;//5//lion可能逃跑
+		t+=5;
 		if (t>EndTime) return 0;
 		Red.LionRunaway(t);
 		Blue.LionRunaway(t);
-		
-		t+=5;//10//前进
+		t+=5;
 		if (t>EndTime) return 0;
-		victory+=Red.WarriorsMarch(t,1);//
-		//向 nCityNum + 1 号城市方向走
-		victory+=Blue.WarriorsMarch(t,-1);//
-		//向 0 号城市方向走
-		if(victory>0) return 1;//终于结束了，THE END
-		
-		t+=25;//35//wolf抢夺敌人武器 
+		victory+=Red.WarriorsMarch(t,1);
+		victory+=Blue.WarriorsMarch(t,-1);
+		if(victory>0) return 1;
+		t+=25;
 		if (t>EndTime) return 0;
 		Red.WolfsRob(t);
 		Blue.WolfsRob(t);
-		
-		t+=5;//40//发生战斗
+		t+=5;
 		if (t>EndTime) return 0;
 		Battles(t);
 
-		t+=10;//50
+		t+=10;
 		if (t>EndTime) return 0;
 		Red.PrintMoney(t); 
 		Blue.PrintMoney(t); 
-		
-		t+=5;//55
+		t+=5;
 		if (t>EndTime) return 0;
 		Red.WarriorsReport(t);
 		Blue.WarriorsReport(t);
-		
-		t+=5;//60
+		t+=5;
 	}
 }
 
@@ -785,9 +706,9 @@ int main(){
 		cin >> M >> N >> K >> T;
 		cin >> life[0] >> life[1] >> life[2] >> life[3] >> life[4];
 		cin >> power[0] >> power[1] >> power[2] >> power[3] >> power[4];
-		CWow MyWow(M,N,K,life,power);  //M¿éÇ®,N¸ö³ÇÊÐ
+		CWow MyWow(M,N,K,life,power);
 		MyWow.Run(T); 
 		cout << "Case " << i+1 << ":" << endl;
-		MyWow.OutputResult(); //Êä³öËùÓÐ½á¹û
+		MyWow.OutputResult();
 	}
 }
